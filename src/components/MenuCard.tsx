@@ -8,7 +8,7 @@ import { Edit, Trash2 } from 'lucide-react';
 interface MenuCardProps {
   item: MenuItem;
   onEdit: (item: MenuItem) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
 }
 
 export const MenuCard: React.FC<MenuCardProps> = ({ item, onEdit, onDelete }) => {

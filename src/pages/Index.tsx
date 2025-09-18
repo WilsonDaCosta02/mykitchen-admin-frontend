@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getMenus } from "../services/menuService";
+import { getMenus, createMenu, updateMenu, deleteMenu } from "../services/menuService";
 import type { MenuItem, MenuFormData } from '@/types/menu';
 import { MenuCard } from '@/components/MenuCard';
 import { MenuForm } from '@/components/MenuForm';
@@ -13,12 +13,10 @@ export default function Index() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; itemId: string | null }>({
+  const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; itemId: number| null }>({
     isOpen: false,
     itemId: null,
   });
-
-
 
 useEffect(() => {
   const fetchMenus = async () => {
@@ -34,30 +32,46 @@ useEffect(() => {
 
 
   // Add
-  const addMenuItem = (formData: MenuFormData) => {
-    const newItem: MenuItem = {
-      id: crypto.randomUUID(), // generate id unik
-      ...formData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    };
+  const addMenuItem = async (formData: MenuFormData) => {
+  try {
+    const newItem = await createMenu(formData);
     setMenuItems((prev) => [...prev, newItem]);
-    toast.success('Menu item added successfully!');
-  };
+    toast.success("Menu item added successfully!");
+  } catch (error) {
+    console.error("Error adding menu:", error);
+    toast.error("Failed to add menu item!");
+  }
+};
+
 
   // Update
-  const updateMenuItem = (id: string, formData: MenuFormData) => {
+  const updateMenuItem = async (id: number, formData: MenuFormData) => {
+  try {
+    const updatedItem = await updateMenu(Number(id), formData);
     setMenuItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...formData } : item))
+      prev.map((item) => (item.id === id ? updatedItem : item))
     );
-    toast.success('Menu item updated successfully!');
-  };
+    toast.success("Menu item updated successfully!");
+  } catch (error) {
+    console.error("Error updating menu:", error);
+    toast.error("Failed to update menu item!");
+  }
+};
+
 
   // Delete
-  const deleteMenuItem = (id: string) => {
-    setMenuItems((prev) => prev.filter((item) => item.id !== id));
+  const deleteMenuItem = async (id: number) => {
+    try {
+      await deleteMenu(id);
+      setMenuItems((prev) => prev.filter((item) => item.id !== id));
+      toast.success("Menu item deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting menu:", error);
+      toast.error("Failed to delete menu item!");
+    }
   };
 
+   // Form handlers
   const handleAddItem = () => {
     setEditingItem(null);
     setIsFormOpen(true);
@@ -68,17 +82,18 @@ useEffect(() => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteItem = (id: string) => {
-    setDeleteDialog({ isOpen: true, itemId: id });
-  };
+const handleDeleteItem = (id: number) => {
+  setDeleteDialog({ isOpen: true, itemId: id });
+};
 
-  const confirmDelete = () => {
-    if (deleteDialog.itemId) {
-      deleteMenuItem(deleteDialog.itemId);
-      toast.success('Menu item deleted successfully!');
-    }
-    setDeleteDialog({ isOpen: false, itemId: null });
-  };
+
+  const confirmDelete = async () => {
+  if (deleteDialog.itemId !== null) {
+    await deleteMenuItem(deleteDialog.itemId);
+  }
+  setDeleteDialog({ isOpen: false, itemId: null });
+};
+
 
   const handleFormSubmit = (formData: MenuFormData) => {
     if (editingItem) {
@@ -86,6 +101,7 @@ useEffect(() => {
     } else {
       addMenuItem(formData);
     }
+    setIsFormOpen(false);
   };
 
   return (
