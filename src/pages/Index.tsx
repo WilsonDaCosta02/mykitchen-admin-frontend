@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
+import { getMenus } from "../services/menuService";
 import type { MenuItem, MenuFormData } from '@/types/menu';
 import { MenuCard } from '@/components/MenuCard';
 import { MenuForm } from '@/components/MenuForm';
@@ -16,6 +17,21 @@ export default function Index() {
     isOpen: false,
     itemId: null,
   });
+
+
+
+useEffect(() => {
+  const fetchMenus = async () => {
+    try {
+      const data = await getMenus();
+      setMenuItems(data);
+    } catch (error) {
+      console.error("Error fetching menus:", error);
+    }
+  };
+  fetchMenus();
+}, []);
+
 
   // Add
   const addMenuItem = (formData: MenuFormData) => {
